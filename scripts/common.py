@@ -3,13 +3,19 @@ from pathlib import Path
 from typing import Optional
 
 
+class HashFileError(FileNotFoundError):
+    ...
+
+
 def calculate_hash(file_path) -> Optional[str]:
     if str(file_path).endswith('.hash'):
-        return None
+        raise HashFileError
 
     hash_file = Path(str(file_path) + '.hash')
-    if hash_file.exists():
+    try:
         return hash_file.read_text()
+    except FileNotFoundError:
+        ...
 
     hash_md5 = md5()
     hash_sha512 = sha512()

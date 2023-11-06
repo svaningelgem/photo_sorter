@@ -166,15 +166,15 @@ class ConverterThm(ConverterImage):
 
 
 class ConverterAvi(ConverterMovie):
-    def __post_init__(self):
+    @cached_property
+    def _thm(self) -> ConverterThm:
         # Find .THM file
         search_for = self.filename.stem.lower() + '.thm'
         for possible_thm_file in self.filename.parent.glob("*.*"):
             if possible_thm_file.name.lower() == search_for:
-                self._thm = ConverterThm(self.root, possible_thm_file)
-                break
-        else:
-            raise ValueError(f"No THM file found for {self.filename}... How do I find the datetime now?")
+                return ConverterThm(self.root, possible_thm_file)
+
+        raise ValueError(f"No THM file found for {self.filename}... How do I find the datetime now?")
 
     @cached_property
     def metadata(self) -> dict:
