@@ -10,13 +10,12 @@ The location where these `YYYY-mm` directories are stored is under the directori
 
 ## Installation
 ```bash
-mamba env create -f environment.yml
+uv sync
 ```
 
 ## Usage
 ```bash
-mamba activate photo_sorter
-python scripts/reorder.py <directory_1> [<directory_2>, ...]
+uv run scripts/reorder.py <directory_1> [<directory_2>, ...]
 ```
 
 ## Cleanup

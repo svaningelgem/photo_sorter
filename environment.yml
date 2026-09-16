@@ -1,9 +1,0 @@
-name: photo_sorter
-dependencies:
-  - python = 3.11
-  - tqdm
-  - exifread < 3
-  - Pillow
-  - pip
-  - pip:
-    - pillow_heif
