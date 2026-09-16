@@ -50,7 +50,10 @@ class ConverterImage:
 
         try:
             with open(self.filename, "rb") as fp:
-                exif_tags = {k: v.values for k, v in exifread.process_file(fp, details=False).items()}
+                exif_tags = {
+                    k: v.values
+                    for k, v in exifread.process_file(fp, details=False).items()
+                }
         except NoParser:
             exif_tags = {}
 
@@ -75,7 +78,9 @@ class ConverterImage:
 
     @cached_property
     def target_filename(self) -> Path:
-        return self.root / self.datetime_.strftime(f"%Y-%m/IMG_%Y%m%d_%H%M%S{self.filename.suffix}")
+        return self.root / self.datetime_.strftime(
+            f"%Y-%m/IMG_%Y%m%d_%H%M%S{self.filename.suffix}"
+        )
 
     @cached_property
     def source_filename(self) -> Path:
@@ -108,7 +113,11 @@ class ConverterImage:
 
             if is_same_file(source, new_target):
                 # Same file
-                logger.debug("Source %s is the same as target %s. Removing source", source, new_target)
+                logger.debug(
+                    "Source %s is the same as target %s. Removing source",
+                    source,
+                    new_target,
+                )
                 if not DEBUG:
                     source.unlink()
                     if source_hash.exists():
@@ -163,7 +172,9 @@ class ConverterMovie(ConverterImage):
 
     @cached_property
     def target_filename(self) -> Path:
-        return self.root / self.datetime_.strftime(f"%Y-%m/MOV_%Y%m%d_%H%M%S{self.filename.suffix}")
+        return self.root / self.datetime_.strftime(
+            f"%Y-%m/MOV_%Y%m%d_%H%M%S{self.filename.suffix}"
+        )
 
 
 class ConverterThm(ConverterImage): ...
@@ -178,7 +189,9 @@ class ConverterAvi(ConverterMovie):
             if possible_thm_file.name.lower() == search_for:
                 return ConverterThm(self.root, possible_thm_file)
 
-        raise ValueError(f"No THM file found for {self.filename}... How do I find the datetime now?")
+        raise ValueError(
+            f"No THM file found for {self.filename}... How do I find the datetime now?"
+        )
 
     @cached_property
     def metadata(self) -> dict:
