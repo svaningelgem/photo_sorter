@@ -1,27 +1,26 @@
-from pathlib import Path
-from collections import defaultdict
 import shutil
+from collections import defaultdict
+from pathlib import Path
 
-
-original_file = 'hashes.txt'
+original_file = "hashes.txt"
 count = 20
 clean_part = 0
 
 
 def load_file(filename: str) -> dict[str, set]:
     print("Loading", filename)
-    shutil.copy(filename, filename + '~')
+    shutil.copy(filename, filename + "~")
 
     data = defaultdict(set)
 
     lines = Path(filename).read_text(encoding="utf8").splitlines()
 
-    with open(filename, 'w', encoding="utf8") as fp:
+    with open(filename, "w", encoding="utf8") as fp:
         for line in lines:
             if not line:
                 continue
 
-            hash_, filename = line.split(' ', 1)
+            hash_, filename = line.split(" ", 1)
             if not Path(filename).exists():  # Already gone
                 continue
 
@@ -34,14 +33,14 @@ def load_file(filename: str) -> dict[str, set]:
 def foto_in_sorted(value) -> int:
     total_size = 0
 
-    foto_in_sorted = [file for file in value if 'ToBeSorted' in file.parts]
-    foto_not_in_sorted = [file for file in value if 'ToBeSorted' not in file.parts]
+    foto_in_sorted = [file for file in value if "ToBeSorted" in file.parts]
+    foto_not_in_sorted = [file for file in value if "ToBeSorted" not in file.parts]
 
     if foto_in_sorted and foto_not_in_sorted:
         for file in foto_in_sorted:
             total_size += file.stat().st_size
             file.unlink()
-            Path(str(file)+'.hash').unlink(missing_ok=True)
+            Path(str(file) + ".hash").unlink(missing_ok=True)
 
         return total_size
     return 0
@@ -63,9 +62,9 @@ def process_data(data):
             total_size += foto_in_sorted(value)
             continue
 
-        total_size += list(value)[0].stat().st_size * (len(value) - 1)
+        total_size += next(iter(value)).stat().st_size * (len(value) - 1)
 
-        print("-"*80)
+        print("-" * 80)
         for v in value:
             print("rm", f'"{v}"')
 
@@ -77,5 +76,5 @@ def process_data(data):
     print(f"Wasted size: {total_size:_}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     process_data(load_file(original_file))

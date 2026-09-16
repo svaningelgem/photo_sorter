@@ -8,12 +8,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Union
 
 import exifread
+from exifread.heic import NoParser
 from PIL import Image, UnidentifiedImageError
 from PIL.ExifTags import TAGS
-from exifread.heic import NoParser
 from pillow_heif import register_heif_opener
 
 from scripts.common import is_same_file
@@ -39,11 +38,7 @@ class ConverterImage:
 
     @cached_property
     def metadata(self) -> dict:
-        extra = {
-            k: v
-            for k, v in self.img.info.items()
-            if k not in ('exif', ) and v
-        }
+        extra = {k: v for k, v in self.img.info.items() if k not in ("exif",) and v}
 
         # assert 'metadata' not in extra, f"{self.filename} doesn't have metadata?"
 
@@ -54,10 +49,8 @@ class ConverterImage:
             exif_data = {}
 
         try:
-            with open(self.filename, 'rb') as fp:
-                exif_tags = {
-                    k: v.values for k, v in exifread.process_file(fp, details=False).items()
-                }
+            with open(self.filename, "rb") as fp:
+                exif_tags = {k: v.values for k, v in exifread.process_file(fp, details=False).items()}
         except NoParser:
             exif_tags = {}
 
@@ -70,13 +63,13 @@ class ConverterImage:
 
     @cached_property
     def icc_profile(self) -> bytes:
-        return self.metadata.pop('icc_profile', None)
+        return self.metadata.pop("icc_profile", None)
 
     @cached_property
     def datetime_(self) -> datetime:
-        for possible in ['datetimeoriginal', 'datetime', 'datetimedigitized']:
+        for possible in ["datetimeoriginal", "datetime", "datetimedigitized"]:
             for value in [v for k, v in self.metadata.items() if possible in k]:
-                return datetime.strptime(value, '%Y:%m:%d %H:%M:%S')
+                return datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
 
         raise ValueError(f"No datetime found in {self.filename}")
 
@@ -90,12 +83,12 @@ class ConverterImage:
 
     def move(self):
         source = self.source_filename.resolve().absolute()
-        source_hash = Path(str(source) + '.hash')
+        source_hash = Path(str(source) + ".hash")
         target = self.target_filename.resolve().absolute()
 
         for counter in itertools.count():
             if counter > 0:
-                new_target = target.with_stem(target.stem + f'_{counter}')
+                new_target = target.with_stem(target.stem + f"_{counter}")
             else:
                 new_target = target
 
@@ -109,13 +102,13 @@ class ConverterImage:
                 if not DEBUG:
                     source.rename(new_target)
                     if source_hash.exists():
-                        new_target_hash = Path(str(new_target) + '.hash')
+                        new_target_hash = Path(str(new_target) + ".hash")
                         source_hash.rename(new_target_hash)
                 return
 
             if is_same_file(source, new_target):
                 # Same file
-                logger.debug(f"Source %s is the same as target %s. Removing source", source, new_target)
+                logger.debug("Source %s is the same as target %s. Removing source", source, new_target)
                 if not DEBUG:
                     source.unlink()
                     if source_hash.exists():
@@ -126,13 +119,25 @@ class ConverterImage:
 class ConverterMovie(ConverterImage):
     @cached_property
     def metadata(self) -> dict:
-        output = subprocess.run(["ffprobe", "-hide_banner", "-i", str(self.filename), "-print_format", "json", "-show_format", "-show_streams"], capture_output=True)
+        output = subprocess.run(
+            [
+                "ffprobe",
+                "-hide_banner",
+                "-i",
+                str(self.filename),
+                "-print_format",
+                "json",
+                "-show_format",
+                "-show_streams",
+            ],
+            capture_output=True,
+        )
         output.check_returncode()
         return json.loads(output.stdout)
 
     @cached_property
     def datetime_(self) -> datetime:
-        def recursive(data: dict, search: str) -> Optional[str]:
+        def recursive(data: dict, search: str) -> str | None:
             if not isinstance(data, dict):
                 raise ValueError("Not a dict")
 
@@ -161,15 +166,14 @@ class ConverterMovie(ConverterImage):
         return self.root / self.datetime_.strftime(f"%Y-%m/MOV_%Y%m%d_%H%M%S{self.filename.suffix}")
 
 
-class ConverterThm(ConverterImage):
-    ...
+class ConverterThm(ConverterImage): ...
 
 
 class ConverterAvi(ConverterMovie):
     @cached_property
     def _thm(self) -> ConverterThm:
         # Find .THM file
-        search_for = self.filename.stem.lower() + '.thm'
+        search_for = self.filename.stem.lower() + ".thm"
         for possible_thm_file in self.filename.parent.glob("*.*"):
             if possible_thm_file.name.lower() == search_for:
                 return ConverterThm(self.root, possible_thm_file)
@@ -197,34 +201,27 @@ class ConverterDeleteFile(ConverterImage):
 
 
 class ConverterIgnoreFile(ConverterImage):
-    def move(self) -> None:
-        ...
+    def move(self) -> None: ...
 
 
-class ConverterMov(ConverterMovie):
-    ...
+class ConverterMov(ConverterMovie): ...
 
 
 class ConverterPng(ConverterImage):
-    def move(self):
-        ...
+    def move(self): ...
 
 
-class ConverterMp4(ConverterMovie):
-    ...
+class ConverterMp4(ConverterMovie): ...
 
 
-class Converter3gp(ConverterMovie):
-    ...
+class Converter3gp(ConverterMovie): ...
 
 
 class ConverterGif(ConverterImage):
-    def move(self):
-        ...
+    def move(self): ...
 
 
-class ConverterTiff(ConverterImage):
-    ...
+class ConverterTiff(ConverterImage): ...
 
 
 class ConverterHeic(ConverterImage):
@@ -238,7 +235,7 @@ class ConverterHeic(ConverterImage):
             stat_ = self.filename.stat()
             earliest_time = min(
                 time
-                for possible_time in ['st_atime', 'st_mtime', 'st_ctime']
+                for possible_time in ["st_atime", "st_mtime", "st_ctime"]
                 if (time := getattr(stat_, possible_time, 0)) > 0
             )
 
@@ -247,36 +244,36 @@ class ConverterHeic(ConverterImage):
 
 conversion_list: dict[str, type[ConverterImage]] = {
     # Images
-    '.jpg': ConverterImage,
-    '.jpeg': ConverterImage,
-    '.heic': ConverterHeic,
-    '.png': ConverterPng,
-    '.gif': ConverterGif,
-    '.tiff': ConverterTiff,
-    '.tif': ConverterTiff,
+    ".jpg": ConverterImage,
+    ".jpeg": ConverterImage,
+    ".heic": ConverterHeic,
+    ".png": ConverterPng,
+    ".gif": ConverterGif,
+    ".tiff": ConverterTiff,
+    ".tif": ConverterTiff,
     # Extra info
-    '.aae': ConverterDeleteFile,  # https://www.howtogeek.com/747946/what-are-aae-files-from-an-iphone-and-can-i-delete-them/ [AAE = XML files with edits from iPhone]
-    '.thm': ConverterIgnoreFile,
-    '.log': ConverterIgnoreFile,
-    '.py': ConverterIgnoreFile,
-    '.pdf': ConverterIgnoreFile,
-    '.txt': ConverterIgnoreFile,
-    '.hash': ConverterIgnoreFile,
+    ".aae": ConverterDeleteFile,  # https://www.howtogeek.com/747946/what-are-aae-files-from-an-iphone-and-can-i-delete-them/ [AAE = XML files with edits from iPhone]
+    ".thm": ConverterIgnoreFile,
+    ".log": ConverterIgnoreFile,
+    ".py": ConverterIgnoreFile,
+    ".pdf": ConverterIgnoreFile,
+    ".txt": ConverterIgnoreFile,
+    ".hash": ConverterIgnoreFile,
     # Movies
-    '.avi': ConverterAvi,
-    '.mov': ConverterMov,
-    '.mp4': ConverterMp4,
-    '.3gp': Converter3gp,
+    ".avi": ConverterAvi,
+    ".mov": ConverterMov,
+    ".mp4": ConverterMp4,
+    ".3gp": Converter3gp,
 }
 
 
-def process_directory(directory: Union[str, Path]) -> None:
+def process_directory(directory: str | Path) -> None:
     p: Path = Path(directory).resolve().absolute()
     logger.debug("Processing %s", p)
     assert p.exists(), f"{p} does not exist?"
     assert p.is_dir(), f"{p} is not a directory?"
 
-    all_entries = sorted(p.rglob('*.*'))
+    all_entries = sorted(p.rglob("*.*"))
     all_dirs = set()
     try:
         for file in all_entries:
@@ -302,6 +299,6 @@ def process_directory(directory: Union[str, Path]) -> None:
             ...
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     for path_to_reorganize in sys.argv[1:]:
         process_directory(path_to_reorganize)
