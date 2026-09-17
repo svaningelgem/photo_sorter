@@ -11,3 +11,7 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[tool.ruff.lint.per-file-ignores]
+# Photo timestamps are local wall clock, and one unreadable file may not stop the batch.
+"scripts/reorder.py" = ["BLE001", "DTZ006", "DTZ007"]

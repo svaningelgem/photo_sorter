@@ -140,15 +140,15 @@ class ConverterMovie(ConverterImage):
                 "-show_streams",
             ],
             capture_output=True,
+            check=True,
         )
-        output.check_returncode()
         return json.loads(output.stdout)
 
     @cached_property
     def datetime_(self) -> datetime:
         def recursive(data: dict, search: str) -> str | None:
             if not isinstance(data, dict):
-                raise ValueError("Not a dict")
+                raise TypeError("Not a dict")
 
             for k, v in data.items():
                 if str(k).lower() == search:
