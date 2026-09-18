@@ -10,7 +10,7 @@ from functools import cached_property
 from pathlib import Path
 
 import exifread
-from exifread.heic import NoParser
+from exifread.core.exceptions import ExifError
 from PIL import Image, UnidentifiedImageError
 from PIL.ExifTags import TAGS
 from pillow_heif import register_heif_opener
@@ -54,7 +54,7 @@ class ConverterImage:
                     k: v.values
                     for k, v in exifread.process_file(fp, details=False).items()
                 }
-        except NoParser:
+        except ExifError:
             exif_tags = {}
 
         final = {}
